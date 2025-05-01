@@ -96,16 +96,6 @@ async function fetchReport(data) {
         console.log('Error:', err)
         loadingArea.innerText = 'Unable to access AI. Please refresh and try again'
     }
-    /** 
-     * Challenge:
-     * 1. Use the OpenAI API to generate a report advising 
-     * on whether to buy or sell the shares based on the data 
-     * that comes in as a parameter.
-     * 
-     * 🎁 See hint.md for help!
-     * 
-     * 🏆 Bonus points: use a try catch to handle errors.
-     * **/
 }
 
 function renderReport(output) {
