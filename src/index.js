@@ -1,14 +1,16 @@
 import { dates } from './utils/dates'
 import './index.css'
-import OpenAI from "openai"
-import Groq from "groq-sdk";
+import { ChatGroq } from "@langchain/groq";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
 
 const tickersArr = []
 
-const groq = new Groq({ apiKey: process.env.REACT_APP_GROQ_API_KEY,
-                        dangerouslyAllowBrowser: true
-                });
-const OpenAI_API = process.env.REACT_APP_OPEN_AI_API_KEY;
+const model = new ChatGroq({
+    apiKey: process.env.REACT_APP_GROQ_API_KEY,
+    model: "llama3-8b-8192",
+    dangerouslyAllowBrowser: true,
+});
+
 const POLYGON_API = process.env.REACT_APP_POLYGON_API_KEY;
 
 const generateReportBtn = document.querySelector('.generate-report-btn')
@@ -69,29 +71,15 @@ async function fetchStockData() {
 }
 
 async function fetchReport(data) {
-    const messages = [
-        {
-            role: 'system',
-            content: 'You are a trading guru. Given data on share prices over the past 3 days, write a report of no more than 150 words describing the stocks performance and recommending whether to buy, hold or sell.'
-        },
-        {
-            role: 'user',
-            content: data
-        }
-    ]
+    const prompt = ChatPromptTemplate.fromMessages([
+        ['system', 'You are a trading guru. Given data on share prices over the past 3 days, write a report of no more than 150 words describing the stocks performance and recommending whether to buy, hold or sell.'],
+        ['user', '{stockData}'],
+    ]);
 
     try {
-        const openai = new OpenAI({
-            apiKey: OpenAI_API,
-            dangerouslyAllowBrowser: true
-        })
-        const response = await groq.chat.completions.create ({
-            model: "llama3-8b-8192",
-            messages: messages,
-        })
-        
-        renderReport(response.choices[0].message.content)
-
+        const chain = prompt.pipe(model);
+        const response = await chain.invoke({ stockData: data });
+        renderReport(response.content);
     } catch (err) {
         console.log('Error:', err)
         loadingArea.innerText = 'Unable to access AI. Please refresh and try again'
